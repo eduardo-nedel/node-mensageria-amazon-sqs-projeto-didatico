@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"            # LocalStack Edge Proxy
+      - "4510-4559:4510-4559"  # external services port range
+    environment:
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - SERVICES=sqs
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - DATA_DIR=/tmp/localstack/data
+      - INIT_SCRIPTS_PATH=/docker-entrypoint-initaws.d
+      - LAMBDA_EXECUTOR=local
+      - DOCKER_FLAGS=--add-host=host.docker.internal:host-gateway
+      - EDGE_PORT=4566
+      - SQS_QUEUE_NAME=minha-queue-exemplo
+      - SQS_QUEUE_URL=http://localhost:4566/000000000000/minha-queue-exemplo
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./init-scripts/init.sh:/etc/localstack/init/ready.d/init-sqs.sh"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
